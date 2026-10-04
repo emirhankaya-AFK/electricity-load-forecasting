@@ -1,0 +1,51 @@
+data:
+  dataset_url: "https://archive.ics.uci.edu/static/public/235/individual+household+electric+power+consumption.zip"
+  raw_dir: "data/raw"
+  processed_dir: "data/processed"
+  target_col: "Global_active_power"
+  resample_rule: "1h"
+  # Practical recent contiguous subset after hourly resampling (2 years = 17520 hours) for CPU-friendliness
+  subset_hours: 17520
+
+split:
+  train_ratio: 0.70
+  val_ratio: 0.15
+  test_ratio: 0.15
+
+features:
+  lag_hours: [1, 2, 3, 24, 48, 168]
+  rolling_windows: [24, 168]
+  rolling_stats: ["mean", "std"]
+  include_calendar: true
+  include_cyclical: true
+
+model:
+  name: "HistGradientBoostingRegressor"
+  max_iter: 150
+  max_depth: 6
+  learning_rate: 0.08
+  min_samples_leaf: 20
+  l2_regularization: 0.1
+  random_state: 42
+
+conformal:
+  alpha: 0.10  # 90% confidence interval
+
+anomaly:
+  threshold_method: "validation_quantile"
+  quantile: 0.99
+  sigma_multiplier: 3.0
+  synthetic_injection_rate: 0.03
+  synthetic_magnitude: 3.5
+  random_state: 42
+
+drift:
+  num_bins: 10
+  warning_threshold: 0.10
+  alert_threshold: 0.25
+
+api:
+  host: "127.0.0.1"
+  port: 8000
+  title: "Electricity Load Forecasting API"
+  version: "0.1.0"
